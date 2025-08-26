@@ -1,0 +1,133 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          String    @default("student") // student, teacher, admin
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts        Account[]
+  sessions        Session[]
+  teacherProfile  TeacherProfile?
+  bookingsAsStudent Booking[] @relation("StudentBookings")
+  bookingsAsTeacher Booking[] @relation("TeacherBookings")
+  reviews         Review[]
+  sentMessages    Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+}
+
+model TeacherProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  bio             String?
+  experience      String?
+  certifications  String?
+  hourlyRate      Float
+  introVideo      String?
+  photo           String?
+  level           String   @default("intermediate") // beginner, intermediate, advanced
+  rating          Float    @default(0)
+  totalReviews    Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scheduleSlots   ScheduleSlot[]
+  bookings        Booking[]
+  reviews         Review[]
+}
+
+model ScheduleSlot {
+  id              String   @id @default(cuid())
+  teacherProfileId String
+  startTime       DateTime
+  endTime         DateTime
+  isAvailable     Boolean  @default(true)
+  createdAt       DateTime @default(now())
+
+  teacherProfile  TeacherProfile @relation(fields: [teacherProfileId], references: [id], onDelete: Cascade)
+  booking         Booking?
+}
+
+model Booking {
+  id              String   @id @default(cuid())
+  studentId       String
+  teacherId       String
+  teacherProfileId String
+  scheduleSlotId  String   @unique
+  status          String   @default("pending") // pending, confirmed, completed, cancelled
+  isTrialLesson   Boolean  @default(false)
+  zoomLink        String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  student         User           @relation("StudentBookings", fields: [studentId], references: [id])
+  teacher         User           @relation("TeacherBookings", fields: [teacherId], references: [id])
+  teacherProfile  TeacherProfile @relation(fields: [teacherProfileId], references: [id])
+  scheduleSlot    ScheduleSlot   @relation(fields: [scheduleSlotId], references: [id])
+  review          Review?
+}
+
+model Review {
+  id              String   @id @default(cuid())
+  bookingId       String   @unique
+  userId          String
+  teacherProfileId String
+  rating          Int
+  comment         String?
+  createdAt       DateTime @default(now())
+
+  booking         Booking        @relation(fields: [bookingId], references: [id])
+  user            User           @relation(fields: [userId], references: [id])
+  teacherProfile  TeacherProfile @relation(fields: [teacherProfileId], references: [id])
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  senderId   String
+  receiverId String
+  content    String
+  createdAt  DateTime @default(now())
+
+  sender     User @relation("SentMessages", fields: [senderId], references: [id])
+  receiver   User @relation("ReceivedMessages", fields: [receiverId], references: [id])
+}
