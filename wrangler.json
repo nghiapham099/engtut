@@ -1,0 +1,13 @@
+{
+  "name": "engtut-app",
+  "compatibility_date": "2024-09-23",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": ".open-next/worker.js",
+  "vars": {
+    "DATABASE_URL": "file:/tmp/dev.db",
+    "NEXTAUTH_URL": "https://engtut-app.nghiapham099.workers.dev",
+    "NEXTAUTH_SECRET": "c91225d6c835c70d7f1271d65a4abe4ae13732ef36b4b4ffab8234dbd273339f",
+    "GOOGLE_CLIENT_ID": "disabled",
+    "GOOGLE_CLIENT_SECRET": "disabled"
+  }
+}
